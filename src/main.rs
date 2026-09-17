@@ -7,12 +7,15 @@ use std::thread;
 use std::time::Duration;
 
 mod map;
-use map::Coordinate;
 use map::Map;
 
 mod snake;
 use snake::Snake;
 
+mod coordinate;
+use coordinate::Coordinate;
+
+mod tile;
 static INIT: Once = Once::new();
 
 const STARTING_HEAD_POSITION: Coordinate = Coordinate::from(0, 0);
@@ -20,8 +23,8 @@ const FRAME_TIME: u64 = 1 / 60 * 1000;
 
 fn main() {
     let player_name: String = get_user_input("Enter your name: ");
-    let mut player_head: Coordinate = STARTING_HEAD_POSITION;
-    let mut player_body: Vec<Coordinate> = Vec::new();
+    let player_head: Coordinate = STARTING_HEAD_POSITION;
+    let player_body: Vec<Coordinate> = Vec::new();
 
     let mut snake: Snake = Snake::new(player_name, player_head, player_body);
     let mut map: Map = Map::default();

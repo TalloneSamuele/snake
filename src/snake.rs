@@ -1,4 +1,4 @@
-use crate::map::{Coordinate, Map};
+use crate::coordinate::Coordinate;
 
 const DEFAULT_CHAR: &str = "o";
 
