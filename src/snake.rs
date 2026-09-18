@@ -1,5 +1,5 @@
+use crate::Direction;
 use crate::coordinate::Coordinate;
-
 const DEFAULT_CHAR: &str = "o";
 
 #[derive(Clone)]
@@ -49,5 +49,23 @@ impl Snake {
             body,
             char: DEFAULT_CHAR.to_string(),
         };
+    }
+
+    pub fn safe_move(&mut self, d: &Direction) {
+        match d {
+            Direction::DOWN => {
+                self.safe_move_down();
+            }
+            Direction::LEFT => {
+                self.safe_move_left();
+            }
+            Direction::RIGHT => {
+                self.safe_move_right();
+            }
+            Direction::UP => {
+                self.safe_move_up();
+            }
+            Direction::NULL => {}
+        }
     }
 }

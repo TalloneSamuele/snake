@@ -21,42 +21,79 @@ use tile::Tile;
 mod food;
 use food::Food;
 
+use crate::Direction::UP;
+
 static INIT: Once = Once::new();
 
 const STARTING_HEAD_POSITION: Coordinate =
     Coordinate::from(Map::DEFAULT_MAP_LENGTH / 2, Map::DEFAULT_MAP_HIGHT / 2);
-const FRAME_TIME: u64 = 1 / 60 * 1000;
+
+const FPS: u32 = 5;
 
 fn main() {
+    let frame_time = Duration::from_secs(1) / FPS;
+
     let player_head: Coordinate = STARTING_HEAD_POSITION;
     let player_body: Vec<Coordinate> = Vec::new();
 
     let mut snake: Snake = Snake::new(player_head, player_body);
     let map: Map = Map::default();
     let mut food: Vec<Food> = Vec::new();
+    let mut last_direction: Direction = Direction::NULL;
 
     loop {
-        update(&mut snake, &map, &mut food);
-        thread::sleep(Duration::from_millis(FRAME_TIME));
+        update(&mut snake, &map, &mut food, &mut last_direction);
+        thread::sleep(frame_time);
     }
 }
 
-fn update(snake: &mut Snake, map: &Map, food: &mut Vec<Food>) {
+fn update(snake: &mut Snake, map: &Map, food: &mut Vec<Food>, last_direction: &mut Direction) {
     print!(
-        "\x1b[2J\x1b[H{}{}",
+        "\x1b[2J\x1b[H{}{} {}",
         map.to_string(&snake, &food),
         snake.get_head().to_string(),
+        last_direction.clone().to_string(),
     );
     io::stdout().flush().unwrap();
-
-    listen_keys(snake);
+    let direction: Direction = listen_keys();
+    update_player_position(snake, &direction, last_direction);
     generate_food(food);
     if check_position(snake, food) {
         food.remove(get_position(snake, food));
     }
 }
+#[derive(Clone, PartialEq)]
 
-fn listen_keys(snake: &mut Snake) {
+enum Direction {
+    UP,
+    RIGHT,
+    DOWN,
+    LEFT,
+    NULL,
+}
+impl Direction {
+    pub fn to_string(self) -> String {
+        match self {
+            Direction::DOWN => {
+                return "DOWN".to_string();
+            }
+            Direction::UP => {
+                return "UP".to_string();
+            }
+            Direction::LEFT => {
+                return "LEFT".to_string();
+            }
+            Direction::RIGHT => {
+                return "RIGHT".to_string();
+            }
+            Direction::NULL => {
+                return "NULL".to_string();
+            }
+        }
+    }
+}
+
+fn listen_keys() -> Direction {
     INIT.call_once(|| {
         Command::new("stty")
             .args(["-icanon", "-echo", "min", "0", "time", "0"])
@@ -69,19 +106,19 @@ fn listen_keys(snake: &mut Snake) {
     if io::stdin().read(&mut buffer).unwrap() > 0 {
         match buffer[0] {
             b'w' => {
-                snake.safe_move_up();
+                return Direction::UP;
             }
 
             b'a' => {
-                snake.safe_move_left();
+                return Direction::LEFT;
             }
 
             b's' => {
-                snake.safe_move_down();
+                return Direction::DOWN;
             }
 
             b'd' => {
-                snake.safe_move_right();
+                return Direction::RIGHT;
             }
 
             b'q' => {
@@ -93,6 +130,7 @@ fn listen_keys(snake: &mut Snake) {
             _ => {}
         }
     }
+    return Direction::NULL;
 }
 
 fn generate_food(food: &mut Vec<Food>) {
@@ -117,6 +155,19 @@ fn get_position(snake: &Snake, food: &Vec<Food>) -> usize {
         }
     }
     return 9999;
+}
+
+fn update_player_position(
+    snake: &mut Snake,
+    direction: &Direction,
+    mut last_direction: &mut Direction,
+) {
+    if direction.clone() == Direction::NULL {
+        snake.safe_move(last_direction);
+        return;
+    }
+    snake.safe_move(direction);
+    *last_direction = direction.clone();
 }
 
 fn get_user_input(hint: &str) -> String {
