@@ -4,9 +4,6 @@ pub struct Tile {
 }
 
 impl Tile {
-    pub fn print(&self) {
-        print!("{}", self.name)
-    }
     pub fn to_string(&self) -> String {
         return self.name.to_string();
     }

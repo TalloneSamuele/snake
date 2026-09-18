@@ -16,33 +16,47 @@ mod coordinate;
 use coordinate::Coordinate;
 
 mod tile;
+use tile::Tile;
+
+mod food;
+use food::Food;
+
 static INIT: Once = Once::new();
 
-const STARTING_HEAD_POSITION: Coordinate = Coordinate::from(0, 0);
+const STARTING_HEAD_POSITION: Coordinate =
+    Coordinate::from(Map::DEFAULT_MAP_LENGTH / 2, Map::DEFAULT_MAP_HIGHT / 2);
 const FRAME_TIME: u64 = 1 / 60 * 1000;
 
 fn main() {
-    let player_name: String = get_user_input("Enter your name: ");
     let player_head: Coordinate = STARTING_HEAD_POSITION;
     let player_body: Vec<Coordinate> = Vec::new();
 
-    let mut snake: Snake = Snake::new(player_name, player_head, player_body);
-    let mut map: Map = Map::default();
+    let mut snake: Snake = Snake::new(player_head, player_body);
+    let map: Map = Map::default();
+    let mut food: Vec<Food> = Vec::new();
 
     loop {
-        update(&mut snake);
-        print!(
-            "\x1b[2J\x1b[H{}{}",
-            map.to_string(&snake),
-            snake.get_head().to_string(),
-        );
-        io::stdout().flush().unwrap();
-
+        update(&mut snake, &map, &mut food);
         thread::sleep(Duration::from_millis(FRAME_TIME));
     }
 }
 
-fn update(snake: &mut Snake) {
+fn update(snake: &mut Snake, map: &Map, food: &mut Vec<Food>) {
+    print!(
+        "\x1b[2J\x1b[H{}{}",
+        map.to_string(&snake, &food),
+        snake.get_head().to_string(),
+    );
+    io::stdout().flush().unwrap();
+
+    listen_keys(snake);
+    generate_food(food);
+    if check_position(snake, food) {
+        food.remove(get_position(snake, food));
+    }
+}
+
+fn listen_keys(snake: &mut Snake) {
     INIT.call_once(|| {
         Command::new("stty")
             .args(["-icanon", "-echo", "min", "0", "time", "0"])
@@ -79,6 +93,30 @@ fn update(snake: &mut Snake) {
             _ => {}
         }
     }
+}
+
+fn generate_food(food: &mut Vec<Food>) {
+    if food.len() < 2 {
+        food.push(Food::random_positioned("@".to_string()));
+    }
+}
+
+fn check_position(snake: &Snake, food: &Vec<Food>) -> bool {
+    for i in 0..food.len() {
+        if food[i].get_position().equals(snake.get_head()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+fn get_position(snake: &Snake, food: &Vec<Food>) -> usize {
+    for i in 0..food.len() {
+        if food[i].get_position().equals(snake.get_head()) {
+            return i;
+        }
+    }
+    return 9999;
 }
 
 fn get_user_input(hint: &str) -> String {

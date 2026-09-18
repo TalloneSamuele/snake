@@ -12,6 +12,10 @@ impl Coordinate {
         return &self.y;
     }
 
+    pub fn equals(&self, c: Coordinate) -> bool {
+        return (self.get_x() == c.get_x() && self.get_y() == c.get_y());
+    }
+
     pub fn to_string(self) -> String {
         return self.x.to_string() + " " + &self.y.to_string();
     }
