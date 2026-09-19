@@ -6,6 +6,8 @@ use std::sync::Once;
 use std::thread;
 use std::time::Duration;
 
+mod tile;
+
 mod map;
 use map::Map;
 
@@ -15,13 +17,11 @@ use snake::Snake;
 mod coordinate;
 use coordinate::Coordinate;
 
-mod tile;
-use tile::Tile;
-
 mod food;
 use food::Food;
 
-use crate::Direction::UP;
+mod direction;
+use direction::Direction;
 
 static INIT: Once = Once::new();
 
@@ -59,37 +59,7 @@ fn update(snake: &mut Snake, map: &Map, food: &mut Vec<Food>, last_direction: &m
     update_player_position(snake, &direction, last_direction);
     generate_food(food);
     if check_position(snake, food) {
-        food.remove(get_position(snake, food));
-    }
-}
-#[derive(Clone, PartialEq)]
-
-enum Direction {
-    UP,
-    RIGHT,
-    DOWN,
-    LEFT,
-    NULL,
-}
-impl Direction {
-    pub fn to_string(self) -> String {
-        match self {
-            Direction::DOWN => {
-                return "DOWN".to_string();
-            }
-            Direction::UP => {
-                return "UP".to_string();
-            }
-            Direction::LEFT => {
-                return "LEFT".to_string();
-            }
-            Direction::RIGHT => {
-                return "RIGHT".to_string();
-            }
-            Direction::NULL => {
-                return "NULL".to_string();
-            }
-        }
+        position_matches(snake, food);
     }
 }
 
@@ -148,13 +118,22 @@ fn check_position(snake: &Snake, food: &Vec<Food>) -> bool {
     return false;
 }
 
-fn get_position(snake: &Snake, food: &Vec<Food>) -> usize {
+fn position_matches(snake: &mut Snake, food: &mut Vec<Food>) {
+    let index = get_matching_position_index(snake, food);
+
+    let position = food[index].get_position();
+
+    food.remove(index);
+    snake.add_to_body(position);
+}
+
+fn get_matching_position_index(snake: &Snake, food: &Vec<Food>) -> usize {
     for i in 0..food.len() {
         if food[i].get_position().equals(snake.get_head()) {
             return i;
         }
     }
-    return 9999;
+    return 99999;
 }
 
 fn update_player_position(
@@ -164,25 +143,9 @@ fn update_player_position(
 ) {
     if direction.clone() == Direction::NULL {
         snake.safe_move(last_direction);
+        snake.move_body(last_direction);
         return;
     }
     snake.safe_move(direction);
     *last_direction = direction.clone();
-}
-
-fn get_user_input(hint: &str) -> String {
-    use std::io::{Write, stdin, stdout};
-    let mut s = String::new();
-    print!("{}", hint);
-    let _ = stdout().flush();
-    stdin()
-        .read_line(&mut s)
-        .expect("Did not enter a correct string");
-    if let Some('\n') = s.chars().next_back() {
-        s.pop();
-    }
-    if let Some('\r') = s.chars().next_back() {
-        s.pop();
-    }
-    return s;
 }

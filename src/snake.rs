@@ -51,6 +51,10 @@ impl Snake {
         };
     }
 
+    pub fn add_to_body(&mut self, c: Coordinate) {
+        self.body.push(c);
+    }
+
     pub fn safe_move(&mut self, d: &Direction) {
         match d {
             Direction::DOWN => {
@@ -64,6 +68,26 @@ impl Snake {
             }
             Direction::UP => {
                 self.safe_move_up();
+            }
+            Direction::NULL => {}
+        }
+    }
+    pub fn move_body(&mut self, d: &Direction) {
+        // IMPLEMENT
+        if self.body.is_empty() {
+            return;
+        }
+
+        match d {
+            Direction::DOWN => self.body[0].increase_x(1),
+            Direction::LEFT => {
+                self.body[0].decrease_y(1);
+            }
+            Direction::RIGHT => {
+                self.body[0].increase_y(1);
+            }
+            Direction::UP => {
+                self.body[0].decrease_x(1);
             }
             Direction::NULL => {}
         }

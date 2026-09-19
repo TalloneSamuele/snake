@@ -1,4 +1,5 @@
 use crate::coordinate::Coordinate;
+use crate::direction::Direction;
 use crate::food::Food;
 use crate::snake::Snake;
 use crate::tile::Tile;
@@ -31,6 +32,14 @@ impl Map {
                 {
                     out += &(snake.get_char().to_string());
                     continue;
+                }
+                for k in 0..snake.get_body().len() {
+                    if i == snake.get_body()[k].get_x().to_owned()
+                        && j == snake.get_body()[k].get_y().to_owned()
+                    {
+                        out += &(snake.get_char().to_string());
+                        continue;
+                    }
                 }
 
                 for k in 0..food.len() {
